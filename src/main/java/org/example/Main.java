@@ -30,6 +30,8 @@ public class Main {
     public static void main(String[] args) {
         String SPEED = "speed";
         String OVER_SPEED = "overspeed";
+        String INPUT_TOPIC = args[0];
+        String OUTPUT_TOPIC = args[1];
 
         Properties properties = new Properties();
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG,"greetings-app");
@@ -41,15 +43,15 @@ public class Main {
                 = (key, value) -> value.get("speed").asInt()>120;
 
         StreamsBuilder streamsBuilder = new StreamsBuilder();
-        streamsBuilder.stream(SPEED, Consumed.with(Serdes.String(),SerdesFactory.dynamicJsonSerdes()))
+        streamsBuilder.stream(INPUT_TOPIC, Consumed.with(Serdes.String(),SerdesFactory.dynamicJsonSerdes()))
                 .filter(speedPredicate)
-                .to(OVER_SPEED, Produced.with(Serdes.String(),SerdesFactory.dynamicJsonSerdes()));
+                .to(OUTPUT_TOPIC, Produced.with(Serdes.String(),SerdesFactory.dynamicJsonSerdes()));
 
         Topology topology = streamsBuilder.build();
 
         var kafkaStreams = new KafkaStreams(topology,properties);
 
-        createTopics(properties, List.of(SPEED,OVER_SPEED));
+        createTopics(properties, List.of(INPUT_TOPIC,OUTPUT_TOPIC));
         Runtime.getRuntime().addShutdownHook(new Thread(kafkaStreams::close));
         kafkaStreams.start();
 
